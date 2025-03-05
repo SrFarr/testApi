@@ -1,25 +1,28 @@
-# Gunakan image .NET SDK yang sesuai
+# Gunakan image .NET SDK
 FROM mcr.microsoft.com/dotnet/sdk:7.0 AS build
 
-# Set working directory di dalam container
+# Set working directory
 WORKDIR /app
 
-# Salin file proyek (.csproj) dulu agar restore lebih cepat
-COPY ["AuthAPI.csproj", "./"]
+# Salin file proyek
+COPY AuthAPI.csproj .
 
-# Jalankan restore dependencies
-RUN dotnet restore
+# Periksa apakah file proyek ada
+RUN ls -lah
 
-# Salin semua file kode ke dalam container
+# Restore dependencies
+RUN dotnet restore --disable-parallel
+
+# Salin semua kode
 COPY . .
 
 # Build aplikasi
 RUN dotnet publish -c Release -o /publish
 
-# Gunakan runtime image yang lebih ringan untuk menjalankan aplikasi
+# Gunakan image runtime
 FROM mcr.microsoft.com/dotnet/aspnet:7.0 AS runtime
 WORKDIR /app
 COPY --from=build /publish .
 
-# Perintah untuk menjalankan aplikasi
+# Jalankan aplikasi
 CMD ["dotnet", "AuthAPI.dll"]
