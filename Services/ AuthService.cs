@@ -8,7 +8,7 @@ namespace AuthAPI.Services
 {
     public class AuthService
     {
-        private readonly string filePath = "users.json";
+        private readonly string filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Data", "users.json");
         private List<User> _users;
 
         public AuthService()
@@ -26,14 +26,16 @@ namespace AuthAPI.Services
 
         private void SaveUsers()
         {
-            File.WriteAllText(filePath, JsonSerializer.Serialize(_users));
+            var json = JsonSerializer.Serialize(_users, new JsonSerializerOptions { WriteIndented = true });
+            File.WriteAllText(filePath, json);
         }
 
         public bool Register(User user)
         {
             if (_users.Any(u => u.Username == user.Username))
-                return false;
+                return false; // Username sudah digunakan
 
+            // Simpan password dalam bentuk plain text
             _users.Add(user);
             SaveUsers();
             return true;
@@ -41,7 +43,12 @@ namespace AuthAPI.Services
 
         public bool Login(string username, string password)
         {
-            return _users.Any(u => u.Username == username && u.Password == password);
+            var user = _users.FirstOrDefault(u => u.Username == username);
+            if (user == null)
+                return false; // Username tidak ditemukan
+
+            // Verifikasi password dalam bentuk plain text
+            return user.Password == password;
         }
     }
 }
