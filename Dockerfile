@@ -1,20 +1,25 @@
-# Gunakan image .NET SDK untuk build aplikasi
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
-WORKDIR /src
+# Gunakan image .NET SDK yang sesuai
+FROM mcr.microsoft.com/dotnet/sdk:7.0 AS build
 
-# Salin file proyek (.csproj) agar restore lebih cepat
+# Set working directory di dalam container
+WORKDIR /app
+
+# Salin file proyek (.csproj) dulu agar restore lebih cepat
 COPY ["AuthAPI.csproj", "./"]
+
+# Jalankan restore dependencies
 RUN dotnet restore
 
-# Salin semua file ke dalam container
+# Salin semua file kode ke dalam container
 COPY . .
-RUN dotnet build -c Release -o /app/build
 
-# Publish aplikasi
-RUN dotnet publish -c Release -o /app/publish
+# Build aplikasi
+RUN dotnet publish -c Release -o /publish
 
-# Gunakan image runtime untuk menjalankan aplikasi
-FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
+# Gunakan runtime image yang lebih ringan untuk menjalankan aplikasi
+FROM mcr.microsoft.com/dotnet/aspnet:7.0 AS runtime
 WORKDIR /app
-COPY --from=build /app/publish .
-ENTRYPOINT ["dotnet", "AuthAPI.dll"]
+COPY --from=build /publish .
+
+# Perintah untuk menjalankan aplikasi
+CMD ["dotnet", "AuthAPI.dll"]
